@@ -5,6 +5,7 @@ from account_data import get_balance_w_labels
 from datetime import datetime, date
 import pandas as pd
 from plotly_calplot import calplot
+import os
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -12,7 +13,7 @@ if "authenticated" not in st.session_state:
 if not st.session_state.authenticated:
     password = st.text_input("Password", type="password")
     if st.button("Login"):
-        if password == st.secrets["password"]:
+        if password == os.environ.get("STREAMLIT_PASSWORD"):
             st.session_state.authenticated = True
             st.rerun()
         else:
