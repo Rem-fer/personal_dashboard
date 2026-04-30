@@ -209,7 +209,7 @@ def get_current_balances(access_token, account_ids, is_card=False):
         try:
             response = get_balance(access_token, acc_id, is_card)
             if response["results"]:
-                current_balances[acc_id] = response["results"][0]["available"]
+                current_balances[acc_id] = response["results"][0]["current"]
             else:
                 print(f"No balance info found for id: {acc_id}")
         except (TypeError, KeyError) as e:
@@ -247,7 +247,7 @@ def get_balance_w_labels():
                     account_id=acc_id,
                     is_card=acc_type == "CREDIT"
                 )
-                balance = balance_response["results"][0]["available"]
+                balance = balance_response["results"][0]["current"]
                 balances[label] = balance if acc_type != "CREDIT" else -balance
 
             except (KeyError, IndexError) as e:
