@@ -1,8 +1,7 @@
 import psycopg2
 from db import get_connection
 
-import pandas as pd
-import random
+
 
 def get_spending(time_period, account_type):
     conn = get_connection()
@@ -21,7 +20,7 @@ def get_spending(time_period, account_type):
 
 
 
-def get_dw_hours(time_period):
+def get_dw_minutes(time_period):
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -122,3 +121,103 @@ def need_review():
         return None
     finally:
         cursor.close()
+
+
+def review_exists(week, year):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT 1 FROM tracking.weekly_review
+            WHERE week = %s AND year = %s
+        """, (week, year))
+        return cursor.fetchone() is not None
+    except Exception as e:
+        print(f"Error checking review: {e}")
+        return False
+    finally:
+        cursor.close()
+
+
+
+def save_metrics_for_review(week, year, dw, med, approaches, spending):
+    if not review_exists(week,year):
+        conn = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO tracking.weekly_review (week, year, deep_work_mins, meditation_days, approaches, spending)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (week, year) DO UPDATE SET
+                    deep_work_mins = EXCLUDED.deep_work_mins,
+                    meditation_days = EXCLUDED.meditation_days,
+                    approaches = EXCLUDED.approaches,
+                    spending = EXCLUDED.spending
+            """, (week, year, dw, med, approaches, spending))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error saving weekly review: {e}")
+            return False
+        finally:
+            if conn:
+                conn.close()
+    else:
+        print(f"Review already submitted for week {week}, skipping metric update")
+        return False
+
+def save_weekly_review_text(week, year, plus, minus, next_, next_focus):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE tracking.weekly_review
+            SET plus = %s, minus = %s, next = %s, next_focus = %s
+            WHERE week = %s AND year = %s
+        """, (plus, minus, next_,next_focus, week, year))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error saving review text: {e}")
+        return False
+    finally:
+        cursor.close()
+
+def get_weekly_review(week, year):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT deep_work_mins, meditation_days, approaches, spending::FLOAT
+            FROM tracking.weekly_review
+            WHERE year = %s AND week = %s
+        """, (year, week))
+        results = cursor.fetchone()
+        return results if results else None
+    except Exception as e:
+        print(f"Error getting weekly review: {e}")
+        return None
+    finally:
+        cursor.close()
+
+def get_week_focus(year,week):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT next_focus
+            FROM tracking.weekly_review
+            WHERE year = %s AND week = %s
+        """, (year, week))
+        result = cursor.fetchone()
+        return result[0] if result and result[0] else None
+    except Exception as e:
+        print(f"Error getting weekly review: {e}")
+        return None
+    finally:
+        cursor.close()
+
+
+
+
