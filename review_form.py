@@ -3,7 +3,6 @@ from sql_queries import get_weekly_review
 from llm import generate_weekly_focus
 from datetime import datetime,date
 import sql_queries as sq
-import time
 
 def display_metrics(week,year):
     weekly_metrics = get_weekly_review(week, year)
@@ -50,6 +49,7 @@ with st.form("my_form 🗒️"):
 st.markdown("## Plus, Minus Next")
 st.markdown("### Review you week ✍🏻")
 st.markdown("---")
+
 if sq.review_exists(week_num,year):
     if not sq.review_text_submitted(week_num, year):
         plus = st.text_area("Plus")
