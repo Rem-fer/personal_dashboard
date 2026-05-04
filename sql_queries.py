@@ -218,6 +218,22 @@ def get_week_focus(year,week):
     finally:
         cursor.close()
 
+def review_text_submitted(week, year):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT plus FROM tracking.weekly_review
+            WHERE week = %s AND year = %s
+        """, (week, year))
+        row = cursor.fetchone()
+        return row is not None and row[0] is not None
+    except Exception as e:
+        print(f"Error checking review: {e}")
+        return False
+    finally:
+        cursor.close()
 
+print(review_text_submitted(18,2026))
 
 
